@@ -1,766 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Latin Flashcards</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Latin Flashcards — Qualis Artifex Theme</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --royal-blue: #4169e1;
-      --light-blue: #f5faff;
-      --white: #ffffff;
-      --gray-light: #f0f0f0;
-      --font-main: 'Poppins', sans-serif;
-    }
-    * { box-sizing: border-box; }
+    :root{
+      /* Qualis Artifex palette */
+      --accent:#8b4513;      /* saddle/gold-brown */
+      --ink:#2e2a27;         /* deep brown */
+      --ink-2:#5a4e45;       /* secondary */
+      --paper:#fffaf0;       /* parchment */
+      --paper-2:#f4ead6;     /* parchment alt */
+      --frame:#d1b792;       /* borders */
+      --ok:#3a7a3a;          /* success */
 
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: var(--font-main);
-      background: var(--gray-light);
-      color: var(--royal-blue);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
+      --radius:16px;
+      --shadow:0 10px 28px rgba(0,0,0,.18);
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink); font-family:'Inter',system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:#2b241d; overflow-x:hidden;
+      display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:20px;
     }
 
-    .panel {
-      background: var(--white);
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      padding: 20px;
-      width: 360px;
-      max-width: 90%;
-      margin-bottom: 20px;
-    }
-    h1, h2 {
-      text-align: center;
-      margin: 0 0 16px;
-      font-weight: 600;
-    }
+    /* Background stack (same vibe as homepage) */
+    .bg{position:fixed; inset:0; z-index:0; overflow:hidden}
+    .bg img{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:110%; height:auto; max-height:110%; object-fit:contain; filter:contrast(1.02) saturate(0.95)}
+    .vignette,.grain,.torch{position:absolute; inset:0; pointer-events:none}
+    .vignette{z-index:1; background:radial-gradient(120vmax 80vmax at 50% 55%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%); mix-blend-mode:multiply}
+    .grain{z-index:2; opacity:.18; mix-blend-mode:overlay; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>"); background-size:140px 140px; animation:grainShift 9s linear infinite}
+    @keyframes grainShift{from{transform:translate3d(0,0,0)} to{transform:translate3d(-140px,-140px,0)}}
+    .torch{z-index:3; --x:50%; --y:40%; --r1:10vmin; --r2:40vmin; background:radial-gradient(circle at var(--x) var(--y), rgba(255,240,200,0.20) 0, rgba(255,215,160,0.12) var(--r1), rgba(0,0,0,0) var(--r2)); mix-blend-mode:soft-light; animation:torchFlicker 2.4s ease-in-out infinite}
+    @keyframes torchFlicker{0%{filter:brightness(1) blur(.1px)} 50%{filter:brightness(1.06) blur(.2px)} 100%{filter:brightness(1) blur(.1px)}}
+    canvas#dust{position:absolute; inset:0; z-index:4; pointer-events:none; mix-blend-mode:screen}
+
+    /* App container */
+    .stack{position:relative; z-index:5; width:min(880px, 96vw); display:grid; gap:18px}
+
+    /* Panels */
+    .panel{background:linear-gradient(180deg, var(--paper), var(--paper-2)); border:2px solid var(--frame); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px}
+    h1,h2{font-family:'Cinzel',serif; margin:0 0 14px; text-align:center; color:var(--accent)}
 
     /* Home screen: chapter list */
-    #chapter-selection label {
-      display: block;
-      margin: 8px 0;
-      font-size: .95rem;
-      cursor: pointer;
-    }
+    #chapter-selection{columns:2; column-gap:16px; max-width:520px; margin:0 auto 8px}
+    #chapter-selection label{display:block; margin:6px 0; font-size:.98rem; cursor:pointer}
 
-    /* Buttons with hover & active animations */
-    button {
-      font-family: var(--font-main);
-      font-weight: 600;
-      background: var(--royal-blue);
-      color: var(--white);
-      border: none;
-      border-radius: 4px;
-      padding: 10px;
-      width: 100%;
-      cursor: pointer;
-      transition: background .2s, transform .1s;
-    }
-    button:hover { background: #27408B; transform: scale(1.02); }
-    button:active { transform: scale(0.98); }
+    /* Buttons */
+    button{font:inherit; font-weight:700; background:rgba(255,255,255,.92); color:var(--accent); border:2px solid var(--accent); border-radius:10px; padding:10px 14px; cursor:pointer; box-shadow:var(--shadow); transition:transform .06s ease, filter .2s ease}
+    button:hover{transform:translateY(-1px); filter:drop-shadow(0 0 .45vmin rgba(139,69,19,.45))}
+    .btn-row{display:flex; gap:10px; justify-content:center}
 
-    /* Hide panels until needed */
-    #direction-container,
-    #study-container {
-      display: none;
-    }
+    /* Progress */
+    #progress-container{width:100%; background:#e8dbc4; border:1px solid var(--frame); border-radius:999px; overflow:hidden; height:10px; margin:0 0 12px}
+    #progress-bar{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), #d8a45b); transition:width .3s}
 
-    /* Progress bar */
-    #progress-container {
-      width: 100%;
-      background: #ddd;
-      border-radius: 4px;
-      overflow: hidden;
-      height: 8px;
-      margin-bottom: 12px;
-    }
-    #progress-bar {
-      height: 100%;
-      width: 0%;
-      background: var(--royal-blue);
-      transition: width .3s;
-    }
+    /* Study area */
+    .study-inner{max-width:420px; margin:0 auto}
+    .card-container{perspective:1000px; margin-bottom:16px}
+    .card{width:420px; max-width:100%; height:260px; margin:0 auto; position:relative; transform-style:preserve-3d; transition:transform .6s; cursor:pointer}
+    .card.flipped{transform:rotateY(180deg)}
+    .card-side{position:absolute; inset:0; display:flex; justify-content:center; align-items:center; backface-visibility:hidden; border:2px solid var(--accent); border-radius:14px; background:linear-gradient(180deg, #fff8ea, #f5e7cc); box-shadow:var(--shadow); padding:14px; font-family:'Cinzel',serif; font-size:1.3rem; text-align:center; color:var(--ink)}
+    .card-side.back{transform:rotateY(180deg); background:linear-gradient(180deg, #ead7b5, #d9c29a)}
 
-    /* Centered study content */
-    .study-inner {
-      max-width: 320px;
-      margin: 0 auto;
-    }
+    .nav-buttons{display:flex; justify-content:center; gap:12px; margin-top:8px}
+    .nav-buttons button{width:auto; padding:8px 16px}
 
-    /* Flashcard styles */
-    .card-container {
-      perspective: 1000px;
-      margin-bottom: 16px;
-    }
-    .card {
-      width: 320px;
-      max-width: 100%;
-      height: 200px;
-      margin: 0 auto;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform .6s;
-      cursor: pointer;
-    }
-    .card.flipped {
-      transform: rotateY(180deg);
-    }
-    .card-side {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border: 2px solid var(--royal-blue);
-      border-radius: 12px;
-      background: var(--white);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-      padding: 12px;
-      font-size: 1.2rem;
-      font-weight: 500;
-      text-align: center;
-    }
-    .card-side.back {
-      transform: rotateY(180deg);
-      background: var(--royal-blue);
-      color: var(--white);
-    }
+    /* Hide until needed */
+    #direction-container, #study-container{display:none}
 
-    /* Nav buttons under card */
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      margin-top: 12px;
-    }
-    .nav-buttons button {
-      width: auto;
-      padding: 8px 16px;
-    }
+    /* Toast */
+    .toast{position:fixed; bottom:14px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 14px; border-radius:999px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:10}
+    .toast.show{opacity:1; transform:translate(-50%, -6px)}
+
+    :focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-radius:6px}
   </style>
 </head>
 <body>
+  <!-- Background stack -->
+  <div class="bg" aria-hidden="true">
+    <img src="qualis-artifex-logo.png" alt="" />
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="torch"></div>
+    <canvas id="dust"></canvas>
+  </div>
 
-  <!-- 1) Home: select chapters -->
-  <div id="menu" class="panel">
-    <h1>Select Chapters</h1>
-    <div id="chapter-selection">
-      <label><input type="checkbox" value="1"> Chapter 1</label>
-      <label><input type="checkbox" value="2"> Chapter 2</label>
-      <label><input type="checkbox" value="3"> Chapter 3</label>
-      <label><input type="checkbox" value="4"> Chapter 4</label>
-      <label><input type="checkbox" value="5"> Chapter 5</label>
-      <label><input type="checkbox" value="6"> Chapter 6</label>
-      <label><input type="checkbox" value="7"> Chapter 7</label>
-      <label><input type="checkbox" value="8"> Chapter 8</label>
-      <label><input type="checkbox" value="9"> Chapter 9</label>
-      <label><input type="checkbox" value="10"> Chapter 10</label>
-      <label><input type="checkbox" value="11"> Chapter 11</label>
-      <label><input type="checkbox" value="12"> Chapter 12</label>
-      <label><input type="checkbox" value="13"> Chapter 13</label>
-      <label><input type="checkbox" value="14"> Chapter 14</label>
-      <label><input type="checkbox" value="15"> Chapter 15</label>
-      <label><input type="checkbox" value="16"> Chapter 16</label>
-      <label><input type="checkbox" value="17"> Chapter 17</label>
-      <label><input type="checkbox" value="18"> Chapter 18</label>
-      <label><input type="checkbox" value="19"> Chapter 19</label>
-      <label><input type="checkbox" value="20"> Chapter 20</label>
+  <div class="stack">
+    <!-- 1) Home: select chapters -->
+    <div id="menu" class="panel">
+      <h1>Select Chapters</h1>
+      <div id="chapter-selection">
+        <!-- Same chapter list -->
+        <label><input type="checkbox" value="1"> Chapter 1</label>
+        <label><input type="checkbox" value="2"> Chapter 2</label>
+        <label><input type="checkbox" value="3"> Chapter 3</label>
+        <label><input type="checkbox" value="4"> Chapter 4</label>
+        <label><input type="checkbox" value="5"> Chapter 5</label>
+        <label><input type="checkbox" value="6"> Chapter 6</label>
+        <label><input type="checkbox" value="7"> Chapter 7</label>
+        <label><input type="checkbox" value="8"> Chapter 8</label>
+        <label><input type="checkbox" value="9"> Chapter 9</label>
+        <label><input type="checkbox" value="10"> Chapter 10</label>
+        <label><input type="checkbox" value="11"> Chapter 11</label>
+        <label><input type="checkbox" value="12"> Chapter 12</label>
+        <label><input type="checkbox" value="13"> Chapter 13</label>
+        <label><input type="checkbox" value="14"> Chapter 14</label>
+        <label><input type="checkbox" value="15"> Chapter 15</label>
+        <label><input type="checkbox" value="16"> Chapter 16</label>
+        <label><input type="checkbox" value="17"> Chapter 17</label>
+        <label><input type="checkbox" value="18"> Chapter 18</label>
+        <label><input type="checkbox" value="19"> Chapter 19</label>
+        <label><input type="checkbox" value="20"> Chapter 20</label>
+      </div>
+      <div class="btn-row"><button id="start-btn">Start</button></div>
     </div>
-    <button id="start-btn">Start</button>
-  </div>
 
-  <!-- 2) Choose direction -->
-  <div id="direction-container" class="panel">
-    <h2>Select Direction</h2>
-    <label><input type="radio" name="direction" value="latToEn"> Latin → English</label>
-    <label><input type="radio" name="direction" value="enToLat"> English → Latin</label>
-    <button id="return-dir-btn">Return to Main Menu</button>
-  </div>
+    <!-- 2) Choose direction -->
+    <div id="direction-container" class="panel">
+      <h2>Select Direction</h2>
+      <div class="btn-row" style="flex-wrap:wrap; gap:12px">
+        <label><input type="radio" name="direction" value="latToEn"> Latin → English</label>
+        <label><input type="radio" name="direction" value="enToLat"> English → Latin</label>
+      </div>
+      <div class="btn-row" style="margin-top:10px"><button id="return-dir-btn">Return to Main Menu</button></div>
+    </div>
 
-  <!-- 3) Study view -->
-  <div id="study-container" class="panel">
-    <div class="study-inner">
-      <div id="progress-container"><div id="progress-bar"></div></div>
-      <div class="card-container">
-        <div class="card" id="flashcard">
-          <div class="card-side front" id="card-front"></div>
-          <div class="card-side back"  id="card-back"></div>
+    <!-- 3) Study view -->
+    <div id="study-container" class="panel">
+      <div class="study-inner">
+        <div id="progress-container"><div id="progress-bar"></div></div>
+        <div class="card-container">
+          <div class="card" id="flashcard">
+            <div class="card-side front" id="card-front"></div>
+            <div class="card-side back"  id="card-back"></div>
+          </div>
+        </div>
+        <div id="card-info" style="text-align:center; font-size:.95rem; color:var(--ink-2)"></div>
+        <div class="nav-buttons">
+          <button id="prev-btn">← Previous</button>
+          <button id="home-btn">Return to Main Menu</button>
+          <button id="next-btn">Next →</button>
         </div>
       </div>
-      <div id="card-info" style="text-align:center; font-size:.9rem;"></div>
-      <div class="nav-buttons">
-        <button id="prev-btn">← Previous</button>
-        <button id="home-btn">Return to Main Menu</button>
-        <button id="next-btn">Next →</button>
-      </div>
     </div>
   </div>
 
-  <script>
-  // Paste your full chapters object here (unchanged)
-  const chapters = {
-   1: [
-        {latin:"est/sunt", english:"is/are"},
-        {latin:"Animus, i m", english:"mind"},
-        {latin:"Deus, i m", english:"god"},
-        {latin:"Terra, ae f", english:"land"},
-        {latin:"Vita, ae f", english:"life"},
-        {latin:"Causa, ae f", english:"reason/cause"},
-        {latin:"Vir, i m", english:"man"},
-        {latin:"Bellum, i n", english:"war"},
-        {latin:"Caelum, i n", english:"Sky/heaven"},
-        {latin:"Puer, i m", english:"boy"},
-        {latin:"Populus, i m", english:"people"},
-        {latin:"Puella, ae f", english:"girl"},
-        {latin:"Fatum, i n", english:"fate"},
-        {latin:"Equus, i m", english:"horse"},
-        {latin:"Dominus, i m", english:"master"}
-      ],
-      2: [
-        {latin:"Amo, amare, amavi, amatum", english:"To love"},
-        {latin:"Paro, parare, paravi, paratum", english:"To prepare"},
-        {latin:"Do, dare, dedi, datum", english:"To give"},
-        {latin:"Specto, spectare, spectavi, spectatum", english:"To watch"},
-        {latin:"Video, videre, vidi, visum", english:"To see"},
-        {latin:"Habeo, habere, habui, habitum", english:"To have"},
-        {latin:"Maneo, manere, mansi, mansum", english:"To remain"},
-        {latin:"Ambulo, ambulare, ambulavi, ambulatum", english:"To walk"},
-        {latin:"Via, ae f", english:"road/way"},
-        {latin:"Verbum, i n", english:"word"},
-        {latin:"Oculus, i m", english:"eye"},
-        {latin:"Annus, i m", english:"year"},
-        {latin:"Ager, agri m", english:"field"},
-        {latin:"Imperium, i n", english:"power"},
-        {latin:"Exercitum, i n", english:"army"},
-        {latin:"iam", english:"Now, already"},
-        {latin:"Semper", english:"always"},
-        {latin:"non", english:"not"}
-      ],
-      3: [
-        {latin:"In + ablative", english:"In/on"},
-        {latin:"e/ex + abl", english:"from/out of"},
-        {latin:"a/ab + abl", english:"by/from"},
-        {latin:"Cum + abl", english:"With (along with) not by means of"},
-        {latin:"Ad + acc", english:"to/toward"},
-        {latin:"Per + acc", english:"through"},
-        {latin:"De + abl", english:"Down from/about"},
-        {latin:"Subito", english:"Suddenly"},
-        {latin:"Nodus, i m", english:"knot"},
-        {latin:"Et", english:"and"},
-        {latin:"Sed", english:"But"},
-        {latin:"Nunc", english:"Now"},
-        {latin:"Natura, ae f", english:"Nature"},
-        {latin:"Ira, ae f", english:"Anger"},
-        {latin:"In + accusative", english:"Into"},
-        {latin:"Regnum, i n", english:"Kingdom"},
-        {latin:"Telum, i n", english:"Spear"},
-        {latin:"Servus, i m", english:"Slave"},
-        {latin:"Umerus, i m", english:"Shoulder"},
-        {latin:"Voco, vocare, vocavi, vocatum", english:"To call"}
-      ],
-      4: [
-        {latin:"Nuntius, i m", english:"messenger"},
-        {latin:"etiam", english:"even/also"},
-        {latin:"Cado, cadere, cecidi, casum", english:"To fall"},
-        {latin:"quod", english:"because"},
-        {latin:"Proelium, proelii n", english:"battle"},
-        {latin:"Dico, dicere, dixi, dictum", english:"To say/speak"},
-        {latin:"Ago, agere, egi, actum", english:"To do/drive/act"},
-        {latin:"Peto, petere, petivi, petitum", english:"To seek/ask"},
-        {latin:"Vinco, vincere, vici, victum", english:"To conquer"},
-        {latin:"Venio, venire, veni, ventum", english:"To arrive"},
-        {latin:"Audio, audire, audivi, auditum", english:"To hear"},
-        {latin:"Scio, scire, scivi, scitum", english:"To know"},
-        {latin:"Periculum, i n", english:"Danger"},
-        {latin:"Ventus, i m", english:"Wind"},
-        {latin:"Cura, ae f", english:"Care/concern"},
-        {latin:"Unda, ae f", english:"wave"},
-        {latin:"Poena, ae f", english:"punishment"},
-        {latin:"Silva, ae f", english:"forest/grove"},
-        {latin:"Nec", english:"And not"},
-        {latin:"-que", english:"and"}
-      ],
-      5: [
-        {latin:"Hic", english:"here"},
-        {latin:"Ubi", english:"when/where"},
-        {latin:"Legatus, i m", english:"ambassador/lieutenant"},
-        {latin:"Disco, discere, didici, discitum", english:"To learn"},
-        {latin:"Mitto, mittere, misi, missum", english:"To send"},
-        {latin:"Sine + abl", english:"without"},
-        {latin:"Ante + acc", english:"before"},
-        {latin:"Sub + abl", english:"under"},
-        {latin:"Pro + abl", english:"In front of/before/on behalf of"},
-        {latin:"Romanus, a, um", english:"Roman"},
-        {latin:"Vastus, a, um", english:"vast"},
-        {latin:"Antrum, i n", english:"cave"},
-        {latin:"Magnus, a, um", english:"great/large"},
-        {latin:"Multus, a, um", english:"many/much"},
-        {latin:"Bonus, a, um", english:"good"},
-        {latin:"Novus, a, um", english:"new"},
-        {latin:"Tantus, a, um", english:"Such a/so great"},
-        {latin:"Longus, a, um", english:"long"},
-        {latin:"Parvus, a, um", english:"small"},
-        {latin:"Altus, a, um", english:"high/deep"}
-      ],
-      6: [
-        {latin:"-ne", english:"Starts a yes or no question"},
-        {latin:"Quis, quid", english:"Who, what"},
-        {latin:"Cur", english:"Why"},
-        {latin:"Quomodo", english:"How"},
-        {latin:"Omnis, omne", english:"All/every"},
-        {latin:"Caelestis, e", english:"heavenly"},
-        {latin:"Porto, portare, portavi, portatum", english:"To carry"},
-        {latin:"Aequor, aequoris n", english:"Level surface/ocean"},
-        {latin:"Rex, regis m", english:"King"},
-        {latin:"Pater, patris m", english:"Father"},
-        {latin:"Corpus, corporis n", english:"Body"},
-        {latin:"Urbs, urbis f", english:"City"},
-        {latin:"Pars, partis f", english:"Part"},
-        {latin:"Tempus, temporis n", english:"Time"},
-        {latin:"Hostis, hostis m/f", english:"Enemy"},
-        {latin:"Ita", english:"Thus/yes"},
-        {latin:"Gravis, grave", english:"Heavy"},
-        {latin:"Ingens, ingentis", english:"Huge"},
-        {latin:"Tristis, e", english:"Sad"},
-        {latin:"Fortis, forte", english:"Brave"}
-      ],
-      7: [
-        {latin:"Socius, socii m", english:"Ally, comrade"},
-        {latin:"Neque", english:"And not, neither, nor"},
-        {latin:"Enim", english:"For, indeed"},
-        {latin:"Timor, timoris m", english:"Fear"},
-        {latin:"Pius, a, um", english:"Loyal, dutiful, pious"},
-        {latin:"Quamquam", english:"although"},
-        {latin:"Cupio, cupere, cupivi, cupitum", english:"To wish, desire"},
-        {latin:"Umbra, ae", english:"Shadow, shade"},
-        {latin:"Aqua, ae f", english:"water"},
-        {latin:"Flamma, ae f", english:"fire"},
-        {latin:"Fama, ae f", english:"Rumor, fame"},
-        {latin:"Turba, ae f", english:"crowd, uproar"},
-        {latin:"Homo, hominis m", english:"Man (vs animal)"},
-        {latin:"Mors, mortis f", english:"Death"},
-        {latin:"Iter, itineris n", english:"Journey, path"},
-        {latin:"Inter + acc", english:"between, among"},
-        {latin:"Do, dare, dedi, datum", english:"To give"},
-        {latin:"Habeo, habere, habui, habitum", english:"To have"},
-        {latin:"Iubeo, iubere, iussi, iussum", english:"To order"},
-        {latin:"Tamen", english:"Nevertheless"}
-      ],
-      8: [
-        {latin:"Hic, haec, hoc", english:"This, the latter"},
-        {latin:"Is, ea, id", english:"He/she/it, this"},
-        {latin:"Ille, illa, illud", english:"That, the former"},
-        {latin:"Ipse, ipsa, ipsum", english:"Himself/herself/itself"},
-        {latin:"se", english:"Himself/herself/itself/themselves"},
-        {latin:"Ego/Nos", english:"I/We"},
-        {latin:"Tu/Vos", english:"You/You all"},
-        {latin:"aut...aut", english:"Either...or"},
-        {latin:"Possum, posse, potui", english:"To be able"},
-        {latin:"Atque", english:"And"},
-        {latin:"Tamen", english:"Nevertheless"},
-        {latin:"Pono, ponere, posui, positum", english:"To place"},
-        {latin:"Teneo, tenere, tenui, tentum", english:"To hold, keep"},
-        {latin:"Notus, a, um", english:"well-known"},
-        {latin:"Capio, capere, cepi, captum", english:"To capture"},
-        {latin:"Eo, ire, ivi, itum", english:"To go"},
-        {latin:"Omnis, omne", english:"All, every"},
-        {latin:"Nox, noctis f", english:"Night"},
-        {latin:"Dux, ducis m", english:"Leader"},
-        {latin:"Mare, maris n", english:"Sea"}
-      ],
-      9: [
-        {latin:"Qui, quae, quod", english:"Who, whom, whose, which, that"},
-        {latin:"Invenio, invenire, inveni, inventum", english:"To find"},
-        {latin:"Quaero, quaerere, quaesivi, quaesitum", english:"To ask/seek/inquire"},
-        {latin:"Duco, ducere, duxi, ductum", english:"To lead"},
-        {latin:"Relinquo, relinquere, reliqui, relictum", english:"To abandon"},
-        {latin:"Timeo, timere, timui, -", english:"To fear"},
-        {latin:"Debeo, debere, debui, debitum", english:"To owe (ought to)/be obliged"},
-        {latin:"Sto, stare, steti, statum", english:"To stand"},
-        {latin:"quoque", english:"also"},
-        {latin:"Finis, finis m", english:"End/boundary"},
-        {latin:"Omnino", english:"Entirely"},
-        {latin:"Exeo, exire, exivi (ii), exitum", english:"To go out"},
-        {latin:"Mater, matris f", english:"Mother"},
-        {latin:"Nomen, nominis n", english:"Name"},
-        {latin:"Miles, militis m", english:"Soldier"},
-        {latin:"Vox, vocis f", english:"Voice"},
-        {latin:"Consilium, i n", english:"Plan"},
-        {latin:"Castrum, i n", english:"Fortress (usually plural meaning camp)"},
-        {latin:"Ferrum, i n", english:"Iron (weapon)"},
-        {latin:"Copia, ae f", english:"Abundance (plural = troops)"}
-      ],
-      10: [
-        {latin:"Manus, manus f", english:"Band, hand"},
-        {latin:"Domus, domus f", english:"Home"},
-        {latin:"Cornu, cornus n", english:"Horn"},
-        {latin:"Res, rei f", english:"Thing, situation"},
-        {latin:"Dies, diei m/f", english:"day"},
-        {latin:"Spes, spei f", english:"hope"},
-        {latin:"Sequor, sequi, secutus sum", english:"To follow"},
-        {latin:"Patior, pati, passus sum", english:"To suffer/endure/allow/permit"},
-        {latin:"Morior, mori, mortuus sum", english:"To die"},
-        {latin:"Loquor, loqui, locutus sum", english:"To speak"},
-        {latin:"Utor, uti, usus sum + abl", english:"To use"},
-        {latin:"Orior, oriri, ortus sum", english:"To arise, begin"},
-        {latin:"For, fari, fatus sum", english:"To say, report"},
-        {latin:"Ingredior, ingredi, ingressus sum", english:"To enter"},
-        {latin:"Hortor, hortari, hortatus sum", english:"To urge"},
-        {latin:"Conor, conari, conatus sum", english:"To try, attempt"},
-        {latin:"Irascor, irasci, iratus sum", english:"To grow angry"},
-        {latin:"Proficiscor, proficisci, profectus sum", english:"To set forth, go"},
-        {latin:"Premo, premere, pressi, pressus", english:"To press"},
-        {latin:"Undique", english:"On all sides"}
-      ],
-      11: [
-        {latin:"Pax, pacis f", english:"Peace"},
-        {latin:"Semel, bis, ter, quater", english:"Once, twice, three times, four times"},
-        {latin:"Erro, errare, erravi, erratus", english:"To wander"},
-        {latin:"Lux, lucis f", english:"light"},
-        {latin:"Tollo, tollere, sustuli, sublatus", english:"To raise up, destroy"},
-        {latin:"Cubitum, cubiti n", english:"elbow"},
-        {latin:"Volvo, volvere, volvi, volutus", english:"To roll"},
-        {latin:"Torus, tori m", english:"Couch, bed"},
-        {latin:"Suus, a, um", english:"His/her own"},
-        {latin:"Facio, facere, feci, factus", english:"To make, do"},
-        {latin:"Meus, a, um", english:"my"},
-        {latin:"Fero, ferre, tuli, latus", english:"To bear, carry"},
-        {latin:"Nihil", english:"Nothing"},
-        {latin:"Idem, eadem, idem", english:"The very same"},
-        {latin:"Nam", english:"For, indeed"},
-        {latin:"Etiam", english:"even, also"},
-        {latin:"At", english:"But, yet"},
-        {latin:"Accipio, accipere, accepi, acceptus", english:"To receive"},
-        {latin:"Virtus, virtutis f", english:"virtue, valor, manliness"},
-        {latin:"Amor, amoris m", english:"love"}
-      ],
-      12: [
-        {latin:"Deinde/dein", english:"Then/next"},
-        {latin:"Volo, velle, volui", english:"To want/wish"},
-        {latin:"Totus, a, um", english:"Whole/entire"},
-        {latin:"Arma, armorum n", english:"Weapons/arms"},
-        {latin:"Legio, legionis f", english:"legion"},
-        {latin:"Propter + acc", english:"Because of"},
-        {latin:"Gero, gerere, gessi, gestum", english:"Bear/Manage/Wage (war)"},
-        {latin:"Navis, navis f", english:"Ship"},
-        {latin:"Onus, oneris n", english:"Burden"},
-        {latin:"Litus, litoris n", english:"Shore"},
-        {latin:"Abeo, abire, abivi, abitum", english:"To go away"},
-        {latin:"Vultus, us m", english:"Look/Expression/Face"},
-        {latin:"Autem", english:"however"},
-        {latin:"Quia", english:"Because"},
-        {latin:"Ergo", english:"Therefore"},
-        {latin:"Miser, misera, miserum", english:"Miserable/wretched"},
-        {latin:"Saepe", english:"Often"},
-        {latin:"Os, oris n", english:"Mouth/face"},
-        {latin:"Ignis, ignis m", english:"Fire"},
-        {latin:"Vivo, vivere, vixi, victum", english:"To live"}
-      ],
-      13: [
-        {latin:"Coepi, coepisse, coeptus sum", english:"To begin (only has perfect forms)"},
-        {latin:"Civitas, civitatis f", english:"Citizenship/state"},
-        {latin:"Facilis, facile", english:"easy"},
-        {latin:"Persuadeo, ere, persuasi, persuASum", english:"To persuade + dative"},
-        {latin:"Maestus, a, um", english:"Sad/sorrowful"},
-        {latin:"Mons, montis m", english:"Mountain"},
-        {latin:"Flumen, fluminis n", english:"River"},
-        {latin:"Iustus, a, um", english:"Right/Just/Fair"},
-        {latin:"Pietas, pietatis f", english:"Sense of duty to family/gods/state"},
-        {latin:"vel...vel", english:"Either...or"},
-        {latin:"Scelus, sceleris n", english:"Crime/sin"},
-        {latin:"Post", english:"(adv or prep with acc) after"},
-        {latin:"Puto, putare, putavi, putatum", english:"To think"},
-        {latin:"Amicus, a, um", english:"Friendly"},
-        {latin:"Ferus, a, um", english:"Wild"},
-        {latin:"Saevus, a, um", english:"Fierce"},
-        {latin:"Durus, a, um", english:"Hard/Tough"},
-        {latin:"Vulnus, vulneris n", english:"Wound"},
-        {latin:"Inde", english:"Then"},
-        {latin:"Opus, operis n", english:"Work"}
-      ],
-      14: [
-        {latin:"Morbus, i m", english:"Sickness/disease"},
-        {latin:"Impero, are, avi, atum", english:"To command"},
-        {latin:"Ardeo, ere, arsi, arsum", english:"To burn/be eager"},
-        {latin:"Procul", english:"At a distance"},
-        {latin:"Civis, civis m/f", english:"Citizen"},
-        {latin:"Donum, i n", english:"Gift"},
-        {latin:"Careo, ere, ui", english:"To lack + abl"},
-        {latin:"Dolus, i m", english:"trick"},
-        {latin:"Moneo, monere, monui, monitum", english:"To warn"},
-        {latin:"Nego, are, avi, atum", english:"To deny"},
-        {latin:"Spero, are, avi, atum", english:"To hope"},
-        {latin:"Cognosco, ere, cognovi, cognitum", english:"To learn/understand"},
-        {latin:"Nescio, ire, nescivi, nescitum", english:"To not know"},
-        {latin:"Intellego, ere, intellexi, intellectum", english:"To understand"},
-        {latin:"Sentio, sentire, sensi, sensum", english:"To perceive/feel"},
-        {latin:"Sanguis, sanguinis m", english:"Blood"},
-        {latin:"Vis f (not fully declinable)", english:"Force /power"},
-        {latin:"Genus, generis n", english:"Origin/kind"},
-        {latin:"Mens, mentis f", english:"Mind"},
-        {latin:"Nemo (neminem acc)", english:"No one"}
-      ],
-      15: [
-        {latin:"Vero", english:"In fact/truly"},
-        {latin:"Appareo, apparere, apparui", english:"To appear/become visible"},
-        {latin:"Antiquus, a, um", english:"Ancient/former"},
-        {latin:"Prodo, prodere, prodidi, proditum", english:"Publish/hand over/give over/betray"},
-        {latin:"Oro, orare, oravi, oratum", english:"To pray"},
-        {latin:"Pulcher, pulchra, pulchrum", english:"Beautiful"},
-        {latin:"Surgo, surgere, surrexi, surrectum", english:"Rise"},
-        {latin:"Uterque, utraque utrumque", english:"Each of two"},
-        {latin:"Deduco, deducere, deduxi, deductum", english:"Launch/lead away"},
-        {latin:"Medius, a, um", english:"Middle/central"},
-        {latin:"Licet, licere, licui", english:"It is permitted + dat + inf"},
-        {latin:"Fugio, fugere, fugi, fugitum", english:"To flee/escape"},
-        {latin:"Mos, moris m", english:"Custom/habit/(pl) character"},
-        {latin:"Pectus, pectoris n", english:"Chest"},
-        {latin:"Fides, fidei f", english:"Trust/faith"},
-        {latin:"Prope", english:"Near/next"},
-        {latin:"Moveo, movere, movi, motum", english:"To move"},
-        {latin:"Gens, gentis f", english:"Family/clan"},
-        {latin:"Labor, laboris m", english:"Toil/exertion"},
-        {latin:"Talis, tale", english:"Such"}
-      ],
-      16: [
-        {latin:"Accido, accidere, accidi", english:"To fall/happen"},
-        {latin:"Adeo", english:"So/to such a degree"},
-        {latin:"Alius, a, um", english:"Other/another"},
-        {latin:"Beneficium, beneficii n", english:"Kindness/service"},
-        {latin:"Celeriter", english:"Quickly"},
-        {latin:"Deficio, deficere, defeci, defectum", english:"To fail/revolt from"},
-        {latin:"Fio, fieri, factus sum", english:"Become/happen/to be done"},
-        {latin:"Luna, ae f", english:"Moon"},
-        {latin:"Magis", english:"More (with ...quam = more than)"},
-        {latin:"Metuo, metuere, metui", english:"To fear"},
-        {latin:"Modo", english:"Just/only"},
-        {latin:"Pauci, ae, a", english:"Few"},
-        {latin:"Pendo, pendere, pependi, pensum", english:"Weigh/hang/pay"},
-        {latin:"Plenus, a, um", english:"Full"},
-        {latin:"Prohibeo, prohibere, prohibui, prohibitum", english:"To restrain/keep away"},
-        {latin:"Refero, referre, rettuli, relatum", english:"To bring back/report"},
-        {latin:"Sic", english:"Thus/in this manner; yes"},
-        {latin:"Tam", english:"So/so much"},
-        {latin:"Tot", english:"So many"},
-        {latin:"Vereor, vereri, veritus sum", english:"To fear"}
-      ],
-      17: [
-        {latin:"Cum (sub conj)", english:"When/Since/Although"},
-        {latin:"Multitudo, multitudinis f", english:"Multitude/Number"},
-        {latin:"Paene", english:"Almost"},
-        {latin:"Ne...quidem", english:"Not...even"},
-        {latin:"Respicio, respicere, respexi, respectum", english:"To look back/Regard/Consider"},
-        {latin:"Quisquam, quidquam", english:"Anyone"},
-        {latin:"Ob", english:"Against/On account of + acc"},
-        {latin:"Ius, iuris n", english:"Right/Law/Justice"},
-        {latin:"Cogo, cogere, coegi, coactum", english:"To Drive Together/Compel"},
-        {latin:"Velut(i)", english:"Just as"},
-        {latin:"Vulgus, i n", english:"The common people"},
-        {latin:"Fax, facis f", english:"Torch"},
-        {latin:"Saxum, i n", english:"Rock/Cliff/Crag"},
-        {latin:"Furor, furoris m", english:"Fury/Rage"},
-        {latin:"Ascendo, ere, ascendi, ascensum", english:"To climb up/Ascend"},
-        {latin:"Eques, equitis m", english:"Knight/Horseman"},
-        {latin:"Soleo, solere, solui, solitum", english:"To be accustomed to"},
-        {latin:"Durus, a, um", english:"Hard/Tough/Harsh"},
-        {latin:"Ars, artis f", english:"Skill"},
-        {latin:"Signum, i n", english:"Sign/Standard/Mark"}
-      ],
-      18: [
-        {latin:"Quo", english:"For which reason; to/in what place"},
-        {latin:"Interim", english:"Meanwhile"},
-        {latin:"Dimitto, ere, dimisi, dimissum", english:"To send away"},
-        {latin:"Transeo, transire, transii, transitum", english:"To go across"},
-        {latin:"Accedo, accedere, accessi, accessum", english:"To approach"},
-        {latin:"Impetus, us m", english:"Attack"},
-        {latin:"Cedo, cedere, cessi, cessum", english:"To go/move/yield"},
-        {latin:"Quam", english:"How"},
-        {latin:"Quando", english:"When"},
-        {latin:"Traho, trahere, traxi, tractum", english:"To drag"},
-        {latin:"Itaque", english:"And"},
-        {latin:"Apud", english:"Near/In the presence of + acc"},
-        {latin:"Quisque, quaeque, quidque", english:"Each one/everyone"},
-        {latin:"Dolor, doloris m", english:"Pain/Grief"},
-        {latin:"Natus, i m", english:"Son"},
-        {latin:"Coniunx, coniugis m/f", english:"Husband/Wife/Spouse"},
-        {latin:"Levis, leve", english:"Light"},
-        {latin:"Castrum, i n", english:"Fortress/Camp (in the plural)"},
-        {latin:"Iaceo, iacere, iacui", english:"Lie"},
-        {latin:"Carmen, carminis n", english:"Song"}
-      ],
-      19: [
-        {latin:"Si", english:"If"},
-        {latin:"Aliquis, aliquae, aliquod", english:"Anyone/anything"},
-        {latin:"Nisi", english:"If not/unless"},
-        {latin:"Dum", english:"While (indic.)/Until (subj.)"},
-        {latin:"Tempestas, tempestatis f", english:"Storm"},
-        {latin:"Ullus, a, um", english:"Any/anyone"},
-        {latin:"Adduco, adducere, adduxi, adductum", english:"To lead to/induce"},
-        {latin:"Auctoritas, auctoritatis f", english:"Influence/authority"},
-        {latin:"Constituo, ere, constitui, constitutum", english:"To establish/put together"},
-        {latin:"Pertineo, pertinere, pertinui", english:"To extend over/reach/pertain to"},
-        {latin:"Comparo, are, avi, atum", english:"To get ready/provide/compare"},
-        {latin:"Forte", english:"By chance"},
-        {latin:"Contra", english:"Against/opposite (adv/prep +acc)"},
-        {latin:"Auris, is f", english:"Ear"},
-        {latin:"Facinus, oris n", english:"Crime"},
-        {latin:"Caedes, is f", english:"Slaughter/killing"},
-        {latin:"Decerno, ere, decrevi, decretum", english:"To determine/decide"},
-        {latin:"Praemium, i n", english:"Reward/bounty"},
-        {latin:"Numquam", english:"Never"},
-        {latin:"Igitur", english:"Therefore"}
-      ],
-      20: [
-        {latin:"Consuetudo, consuetudinis f", english:"Custom/habit"},
-        {latin:"Appello, are, avi, atum", english:"To call/address/name"},
-        {latin:"Porta, ae f", english:"Gate"},
-        {latin:"Misceo, ere, miscui, mixtum", english:"To mix"},
-        {latin:"Cerno, ere, crevi, cretum", english:"To discern/separate"},
-        {latin:"Parens, parentis m/f", english:"Parent"},
-        {latin:"Extremus, a, um", english:"Farthest/extreme"},
-        {latin:"Soror, oris f", english:"Sister"},
-        {latin:"Pes, pedis m", english:"Foot"},
-        {latin:"Celer, celeris, celere", english:"Swift"},
-        {latin:"Tot...quot", english:"As many...as"},
-        {latin:"Lingua, ae f", english:"Tongue/language"},
-        {latin:"Sono, are, avi, atum", english:"Sound/resound"},
-        {latin:"Mox", english:"Soon"},
-        {latin:"Tergum, i n", english:"Back/rear"},
-        {latin:"Crimen, criminis n", english:"Verdict/accusation"},
-        {latin:"Rumpo, rumpere, rupi, ruptum", english:"To break/rupture"},
-        {latin:"Aspicio, aspicere, aspexi, aspectum", english:"To look at/behold"},
-        {latin:"Fluctus, us m", english:"Flood/surf/wave"},
-        {latin:"Classis, is f", english:"Fleet"}
-      ]
-  };
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  // UI refs (unchanged)
-  const menuEl       = document.getElementById('menu');
-  const dirEl        = document.getElementById('direction-container');
-  const studyEl      = document.getElementById('study-container');
-  const startBtn     = document.getElementById('start-btn');
-  const returnDirBtn = document.getElementById('return-dir-btn');
-  const homeBtn      = document.getElementById('home-btn');
+<script>
+// ===== Chapters data (unchanged) =====
+const chapters = {
+  1:[{latin:"est/sunt",english:"is/are"},{latin:"Animus, i m",english:"mind"},{latin:"Deus, i m",english:"god"},{latin:"Terra, ae f",english:"land"},{latin:"Vita, ae f",english:"life"},{latin:"Causa, ae f",english:"reason/cause"},{latin:"Vir, i m",english:"man"},{latin:"Bellum, i n",english:"war"},{latin:"Caelum, i n",english:"Sky/heaven"},{latin:"Puer, i m",english:"boy"},{latin:"Populus, i m",english:"people"},{latin:"Puella, ae f",english:"girl"},{latin:"Fatum, i n",english:"fate"},{latin:"Equus, i m",english:"horse"},{latin:"Dominus, i m",english:"master"}],
+  2:[{latin:"Amo, amare, amavi, amatum",english:"To love"},{latin:"Paro, parare, paravi, paratum",english:"To prepare"},{latin:"Do, dare, dedi, datum",english:"To give"},{latin:"Specto, spectare, spectavi, spectatum",english:"To watch"},{latin:"Video, videre, vidi, visum",english:"To see"},{latin:"Habeo, habere, habui, habitum",english:"To have"},{latin:"Maneo, manere, mansi, mansum",english:"To remain"},{latin:"Ambulo, ambulare, ambulavi, ambulatum",english:"To walk"},{latin:"Via, ae f",english:"road/way"},{latin:"Verbum, i n",english:"word"},{latin:"Oculus, i m",english:"eye"},{latin:"Annus, i m",english:"year"},{latin:"Ager, agri m",english:"field"},{latin:"Imperium, i n",english:"power"},{latin:"Exercitum, i n",english:"army"},{latin:"iam",english:"Now, already"},{latin:"Semper",english:"always"},{latin:"non",english:"not"}],
+  3:[{latin:"In + ablative",english:"In/on"},{latin:"e/ex + abl",english:"from/out of"},{latin:"a/ab + abl",english:"by/from"},{latin:"Cum + abl",english:"With (along with) not by means of"},{latin:"Ad + acc",english:"to/toward"},{latin:"Per + acc",english:"through"},{latin:"De + abl",english:"Down from/about"},{latin:"Subito",english:"Suddenly"},{latin:"Nodus, i m",english:"knot"},{latin:"Et",english:"and"},{latin:"Sed",english:"But"},{latin:"Nunc",english:"Now"},{latin:"Natura, ae f",english:"Nature"},{latin:"Ira, ae f",english:"Anger"},{latin:"In + accusative",english:"Into"},{latin:"Regnum, i n",english:"Kingdom"},{latin:"Telum, i n",english:"Spear"},{latin:"Servus, i m",english:"Slave"},{latin:"Umerus, i m",english:"Shoulder"},{latin:"Voco, vocare, vocavi, vocatum",english:"To call"}],
+  4:[{latin:"Nuntius, i m",english:"messenger"},{latin:"etiam",english:"even/also"},{latin:"Cado, cadere, cecidi, casum",english:"To fall"},{latin:"quod",english:"because"},{latin:"Proelium, proelii n",english:"battle"},{latin:"Dico, dicere, dixi, dictum",english:"To say/speak"},{latin:"Ago, agere, egi, actum",english:"To do/drive/act"},{latin:"Peto, petere, petivi, petitum",english:"To seek/ask"},{latin:"Vinco, vincere, vici, victum",english:"To conquer"},{latin:"Venio, venire, veni, ventum",english:"To arrive"},{latin:"Audio, audire, audivi, auditum",english:"To hear"},{latin:"Scio, scire, scivi, scitum",english:"To know"},{latin:"Periculum, i n",english:"Danger"},{latin:"Ventus, i m",english:"Wind"},{latin:"Cura, ae f",english:"Care/concern"},{latin:"Unda, ae f",english:"wave"},{latin:"Poena, ae f",english:"punishment"},{latin:"Silva, ae f",english:"forest/grove"},{latin:"Nec",english:"And not"},{latin:"-que",english:"and"}],
+  5:[{latin:"Hic",english:"here"},{latin:"Ubi",english:"when/where"},{latin:"Legatus, i m",english:"ambassador/lieutenant"},{latin:"Disco, discere, didici, discitum",english:"To learn"},{latin:"Mitto, mittere, misi, missum",english:"To send"},{latin:"Sine + abl",english:"without"},{latin:"Ante + acc",english:"before"},{latin:"Sub + abl",english:"under"},{latin:"Pro + abl",english:"In front of/before/on behalf of"},{latin:"Romanus, a, um",english:"Roman"},{latin:"Vastus, a, um",english:"vast"},{latin:"Antrum, i n",english:"cave"},{latin:"Magnus, a, um",english:"great/large"},{latin:"Multus, a, um",english:"many/much"},{latin:"Bonus, a, um",english:"good"},{latin:"Novus, a, um",english:"new"},{latin:"Tantus, a, um",english:"Such a/so great"},{latin:"Longus, a, um",english:"long"},{latin:"Parvus, a, um",english:"small"},{latin:"Altus, a, um",english:"high/deep"}],
+  6:[{latin:"-ne",english:"Starts a yes or no question"},{latin:"Quis, quid",english:"Who, what"},{latin:"Cur",english:"Why"},{latin:"Quomodo",english:"How"},{latin:"Omnis, omne",english:"All/every"},{latin:"Caelestis, e",english:"heavenly"},{latin:"Porto, portare, portavi, portatum",english:"To carry"},{latin:"Aequor, aequoris n",english:"Level surface/ocean"},{latin:"Rex, regis m",english:"King"},{latin:"Pater, patris m",english:"Father"},{latin:"Corpus, corporis n",english:"Body"},{latin:"Urbs, urbis f",english:"City"},{latin:"Pars, partis f",english:"Part"},{latin:"Tempus, temporis n",english:"Time"},{latin:"Hostis, hostis m/f",english:"Enemy"},{latin:"Ita",english:"Thus/yes"},{latin:"Gravis, grave",english:"Heavy"},{latin:"Ingens, ingentis",english:"Huge"},{latin:"Tristis, e",english:"Sad"},{latin:"Fortis, forte",english:"Brave"}],
+  7:[{latin:"Socius, socii m",english:"Ally, comrade"},{latin:"Neque",english:"And not, neither, nor"},{latin:"Enim",english:"For, indeed"},{latin:"Timor, timoris m",english:"Fear"},{latin:"Pius, a, um",english:"Loyal, dutiful, pious"},{latin:"Quamquam",english:"although"},{latin:"Cupio, cupere, cupivi, cupitum",english:"To wish, desire"},{latin:"Umbra, ae",english:"Shadow, shade"},{latin:"Aqua, ae f",english:"water"},{latin:"Flamma, ae f",english:"fire"},{latin:"Fama, ae f",english:"Rumor, fame"},{latin:"Turba, ae f",english:"crowd, uproar"},{latin:"Homo, hominis m",english:"Man (vs animal)"},{latin:"Mors, mortis f",english:"Death"},{latin:"Iter, itineris n",english:"Journey, path"},{latin:"Inter + acc",english:"between, among"},{latin:"Do, dare, dedi, datum",english:"To give"},{latin:"Habeo, habere, habui, habitum",english:"To have"},{latin:"Iubeo, iubere, iussi, iussum",english:"To order"},{latin:"Tamen",english:"Nevertheless"}],
+  8:[{latin:"Hic, haec, hoc",english:"This, the latter"},{latin:"Is, ea, id",english:"He/she/it, this"},{latin:"Ille, illa, illud",english:"That, the former"},{latin:"Ipse, ipsa, ipsum",english:"Himself/herself/itself"},{latin:"se",english:"Himself/herself/itself/themselves"},{latin:"Ego/Nos",english:"I/We"},{latin:"Tu/Vos",english:"You/You all"},{latin:"aut...aut",english:"Either...or"},{latin:"Possum, posse, potui",english:"To be able"},{latin:"Atque",english:"And"},{latin:"Tamen",english:"Nevertheless"},{latin:"Pono, ponere, posui, positum",english:"To place"},{latin:"Teneo, tenere, tenui, tentum",english:"To hold, keep"},{latin:"Notus, a, um",english:"well-known"},{latin:"Capio, capere, cepi, captum",english:"To capture"},{latin:"Eo, ire, ivi, itum",english:"To go"},{latin:"Omnis, omne",english:"All, every"},{latin:"Nox, noctis f",english:"Night"},{latin:"Dux, ducis m",english:"Leader"},{latin:"Mare, maris n",english:"Sea"}],
+  9:[{latin:"Qui, quae, quod",english:"Who, whom, whose, which, that"},{latin:"Invenio, invenire, inveni, inventum",english:"To find"},{latin:"Quaero, quaerere, quaesivi, quaesitum",english:"To ask/seek/inquire"},{latin:"Duco, ducere, duxi, ductum",english:"To lead"},{latin:"Relinquo, relinquere, reliqui, relictum",english:"To abandon"},{latin:"Timeo, timere, timui, -",english:"To fear"},{latin:"Debeo, debere, debui, debitum",english:"To owe (ought to)/be obliged"},{latin:"Sto, stare, steti, statum",english:"To stand"},{latin:"quoque",english:"also"},{latin:"Finis, finis m",english:"End/boundary"},{latin:"Omnino",english:"Entirely"},{latin:"Exeo, exire, exivi (ii), exitum",english:"To go out"},{latin:"Mater, matris f",english:"Mother"},{latin:"Nomen, nominis n",english:"Name"},{latin:"Miles, militis m",english:"Soldier"},{latin:"Vox, vocis f",english:"Voice"},{latin:"Consilium, i n",english:"Plan"},{latin:"Castrum, i n",english:"Fortress (usually plural meaning camp)"},{latin:"Ferrum, i n",english:"Iron (weapon)"},{latin:"Copia, ae f",english:"Abundance (plural = troops)"}],
+  10:[{latin:"Manus, manus f",english:"Band, hand"},{latin:"Domus, domus f",english:"Home"},{latin:"Cornu, cornus n",english:"Horn"},{latin:"Res, rei f",english:"Thing, situation"},{latin:"Dies, diei m/f",english:"day"},{latin:"Spes, spei f",english:"hope"},{latin:"Sequor, sequi, secutus sum",english:"To follow"},{latin:"Patior, pati, passus sum",english:"To suffer/endure/allow/permit"},{latin:"Morior, mori, mortuus sum",english:"To die"},{latin:"Loquor, loqui, locutus sum",english:"To speak"},{latin:"Utor, uti, usus sum + abl",english:"To use"},{latin:"Orior, oriri, ortus sum",english:"To arise, begin"},{latin:"For, fari, fatus sum",english:"To say, report"},{latin:"Ingredior, ingredi, ingressus sum",english:"To enter"},{latin:"Hortor, hortari, hortatus sum",english:"To urge"},{latin:"Conor, conari, conatus sum",english:"To try, attempt"},{latin:"Irascor, irasci, iratus sum",english:"To grow angry"},{latin:"Proficiscor, proficisci, profectus sum",english:"To set forth, go"},{latin:"Premo, premere, pressi, pressus",english:"To press"},{latin:"Undique",english:"On all sides"}],
+  11:[{latin:"Pax, pacis f",english:"Peace"},{latin:"Semel, bis, ter, quater",english:"Once, twice, three times, four times"},{latin:"Erro, errare, erravi, erratus",english:"To wander"},{latin:"Lux, lucis f",english:"light"},{latin:"Tollo, tollere, sustuli, sublatus",english:"To raise up, destroy"},{latin:"Cubitum, cubiti n",english:"elbow"},{latin:"Volvo, volvere, volvi, volutus",english:"To roll"},{latin:"Torus, tori m",english:"Couch, bed"},{latin:"Suus, a, um",english:"His/her own"},{latin:"Facio, facere, feci, factus",english:"To make, do"},{latin:"Meus, a, um",english:"my"},{latin:"Fero, ferre, tuli, latus",english:"To bear, carry"},{latin:"Nihil",english:"Nothing"},{latin:"Idem, eadem, idem",english:"The very same"},{latin:"Nam",english:"For, indeed"},{latin:"Etiam",english:"even, also"},{latin:"At",english:"But, yet"},{latin:"Accipio, accipere, accepi, acceptus",english:"To receive"},{latin:"Virtus, virtutis f",english:"virtue, valor, manliness"},{latin:"Amor, amoris m",english:"love"}],
+  12:[{latin:"Deinde/dein",english:"Then/next"},{latin:"Volo, velle, volui",english:"To want/wish"},{latin:"Totus, a, um",english:"Whole/entire"},{latin:"Arma, armorum n",english:"Weapons/arms"},{latin:"Legio, legionis f",english:"legion"},{latin:"Propter + acc",english:"Because of"},{latin:"Gero, gerere, gessi, gestum",english:"Bear/Manage/Wage (war)"},{latin:"Navis, navis f",english:"Ship"},{latin:"Onus, oneris n",english:"Burden"},{latin:"Litus, litoris n",english:"Shore"},{latin:"Abeo, abire, abivi, abitum",english:"To go away"},{latin:"Vultus, us m",english:"Look/Expression/Face"},{latin:"Autem",english:"however"},{latin:"Quia",english:"Because"},{latin:"Ergo",english:"Therefore"},{latin:"Miser, misera, miserum",english:"Miserable/wretched"},{latin:"Saepe",english:"Often"},{latin:"Os, oris n",english:"Mouth/face"},{latin:"Ignis, ignis m",english:"Fire"},{latin:"Vivo, vivere, vixi, victum",english:"To live"}],
+  13:[{latin:"Coepi, coepisse, coeptus sum",english:"To begin (only has perfect forms)"},{latin:"Civitas, civitatis f",english:"Citizenship/state"},{latin:"Facilis, facile",english:"easy"},{latin:"Persuadeo, ere, persuasi, persuASum",english:"To persuade + dative"},{latin:"Maestus, a, um",english:"Sad/sorrowful"},{latin:"Mons, montis m",english:"Mountain"},{latin:"Flumen, fluminis n",english:"River"},{latin:"Iustus, a, um",english:"Right/Just/Fair"},{latin:"Pietas, pietatis f",english:"Sense of duty to family/gods/state"},{latin:"vel...vel",english:"Either...or"},{latin:"Scelus, sceleris n",english:"Crime/sin"},{latin:"Post",english:"(adv or prep with acc) after"},{latin:"Puto, putare, putavi, putatum",english:"To think"},{latin:"Amicus, a, um",english:"Friendly"},{latin:"Ferus, a, um",english:"Wild"},{latin:"Saevus, a, um",english:"Fierce"},{latin:"Durus, a, um",english:"Hard/Tough"},{latin:"Vulnus, vulneris n",english:"Wound"},{latin:"Inde",english:"Then"},{latin:"Opus, operis n",english:"Work"}],
+  14:[{latin:"Morbus, i m",english:"Sickness/disease"},{latin:"Impero, are, avi, atum",english:"To command"},{latin:"Ardeo, ere, arsi, arsum",english:"To burn/be eager"},{latin:"Procul",english:"At a distance"},{latin:"Civis, civis m/f",english:"Citizen"},{latin:"Donum, i n",english:"Gift"},{latin:"Careo, ere, ui",english:"To lack + abl"},{latin:"Dolus, i m",english:"trick"},{latin:"Moneo, monere, monui, monitum",english:"To warn"},{latin:"Nego, are, avi, atum",english:"To deny"},{latin:"Spero, are, avi, atum",english:"To hope"},{latin:"Cognosco, ere, cognovi, cognitum",english:"To learn/understand"},{latin:"Nescio, ire, nescivi, nescitum",english:"To not know"},{latin:"Intellego, ere, intellexi, intellectum",english:"To understand"},{latin:"Sentio, sentire, sensi, sensum",english:"To perceive/feel"},{latin:"Sanguis, sanguinis m",english:"Blood"},{latin:"Vis f (not fully declinable)",english:"Force /power"},{latin:"Genus, generis n",english:"Origin/kind"},{latin:"Mens, mentis f",english:"Mind"},{latin:"Nemo (neminem acc)",english:"No one"}],
+  15:[{latin:"Vero",english:"In fact/truly"},{latin:"Appareo, apparere, apparui",english:"To appear/become visible"},{latin:"Antiquus, a, um",english:"Ancient/former"},{latin:"Prodo, prodere, prodidi, proditum",english:"Publish/hand over/give over/betray"},{latin:"Oro, orare, oravi, oratum",english:"To pray"},{latin:"Pulcher, pulchra, pulchrum",english:"Beautiful"},{latin:"Surgo, surgere, surrexi, surrectum",english:"Rise"},{latin:"Uterque, utraque utrumque",english:"Each of two"},{latin:"Deduco, deducere, deduxi, deductum",english:"Launch/lead away"},{latin:"Medius, a, um",english:"Middle/central"},{latin:"Licet, licere, licui",english:"It is permitted + dat + inf"},{latin:"Fugio, fugere, fugi, fugitum",english:"To flee/escape"},{latin:"Mos, moris m",english:"Custom/habit/(pl) character"},{latin:"Pectus, pectoris n",english:"Chest"},{latin:"Fides, fidei f",english:"Trust/faith"},{latin:"Prope",english:"Near/next"},{latin:"Moveo, movere, movi, motum",english:"To move"},{latin:"Gens, gentis f",english:"Family/clan"},{latin:"Labor, laboris m",english:"Toil/exertion"},{latin:"Talis, tale",english:"Such"}],
+  16:[{latin:"Accido, accidere, accidi",english:"To fall/happen"},{latin:"Adeo",english:"So/to such a degree"},{latin:"Alius, a, um",english:"Other/another"},{latin:"Beneficium, beneficii n",english:"Kindness/service"},{latin:"Celeriter",english:"Quickly"},{latin:"Deficio, deficere, defeci, defectum",english:"To fail/revolt from"},{latin:"Fio, fieri, factus sum",english:"Become/happen/to be done"},{latin:"Luna, ae f",english:"Moon"},{latin:"Magis",english:"More (with ...quam = more than)"},{latin:"Metuo, metuere, metui",english:"To fear"},{latin:"Modo",english:"Just/only"},{latin:"Pauci, ae, a",english:"Few"},{latin:"Pendo, pendere, pependi, mensum",english:"Weigh/hang/pay"},{latin:"Plenus, a, um",english:"Full"},{latin:"Prohibeo, prohibere, prohibui, prohibitum",english:"To restrain/keep away"},{latin:"Refero, referre, rettuli, relatum",english:"To bring back/report"},{latin:"Sic",english:"Thus/in this manner; yes"},{latin:"Tam",english:"So/so much"},{latin:"Tot",english:"So many"},{latin:"Vereor, vereri, veritus sum",english:"To fear"}],
+  17:[{latin:"Cum (sub conj)",english:"When/Since/Although"},{latin:"Multitudo, multitudinis f",english:"Multitude/Number"},{latin:"Paene",english:"Almost"},{latin:"Ne...quidem",english:"Not...even"},{latin:"Respicio, respicere, respexi, respectum",english:"To look back/Regard/Consider"},{latin:"Quisquam, quidquam",english:"Anyone"},{latin:"Ob",english:"Against/On account of + acc"},{latin:"Ius, iuris n",english:"Right/Law/Justice"},{latin:"Cogo, cogere, coegi, coactum",english:"To Drive Together/Compel"},{latin:"Velut(i)",english:"Just as"},{latin:"Vulgus, i n",english:"The common people"},{latin:"Fax, facis f",english:"Torch"},{latin:"Saxum, i n",english:"Rock/Cliff/Crag"},{latin:"Furor, furoris m",english:"Fury/Rage"},{latin:"Ascendo, ere, ascendi, ascensum",english:"To climb up/Ascend"},{latin:"Eques, equitis m",english:"Knight/Horseman"},{latin:"Soleo, solere, solui, solitum",english:"To be accustomed to"},{latin:"Durus, a, um",english:"Hard/Tough/Harsh"},{latin:"Ars, artis f",english:"Skill"},{latin:"Signum, i n",english:"Sign/Standard/Mark"}],
+  18:[{latin:"Quo",english:"For which reason; to/in what place"},{latin:"Interim",english:"Meanwhile"},{latin:"Dimitto, ere, dimisi, dimissum",english:"To send away"},{latin:"Transeo, transire, transii, transitum",english:"To go across"},{latin:"Accedo, accedere, accessi, accessum",english:"To approach"},{latin:"Impetus, us m",english:"Attack"},{latin:"Cedo, cedere, cessi, cessum",english:"To go/move/yield"},{latin:"Quam",english:"How"},{latin:"Quando",english:"When"},{latin:"Traho, trahere, traxi, tractum",english:"To drag"},{latin:"Itaque",english:"And"},{latin:"Apud",english:"Near/In the presence of + acc"},{latin:"Quisque, quaeque, quidque",english:"Each one/everyone"},{latin:"Dolor, doloris m",english:"Pain/Grief"},{latin:"Natus, i m",english:"Son"},{latin:"Coniunx, coniugis m/f",english:"Husband/Wife/Spouse"},{latin:"Levis, leve",english:"Light"},{latin:"Castrum, i n",english:"Fortress/Camp (in the plural)"},{latin:"Iaceo, iacere, iacui",english:"Lie"},{latin:"Carmen, carminis n",english:"Song"}],
+  19:[{latin:"Si",english:"If"},{latin:"Aliquis, aliquae, aliquod",english:"Anyone/anything"},{latin:"Nisi",english:"If not/unless"},{latin:"Dum",english:"While (indic.)/Until (subj.)"},{latin:"Tempestas, tempestatis f",english:"Storm"},{latin:"Ullus, a, um",english:"Any/anyone"},{latin:"Adduco, adducere, adduxi, adductum",english:"To lead to/induce"},{latin:"Auctoritas, auctoritatis f",english:"Influence/authority"},{latin:"Constituo, ere, constitui, constitutum",english:"To establish/put together"},{latin:"Pertineo, pertinere, pertinui",english:"To extend over/reach/pertain to"},{latin:"Comparo, are, avi, atum",english:"To get ready/provide/compare"},{latin:"Forte",english:"By chance"},{latin:"Contra",english:"Against/opposite (adv/prep +acc)"},{latin:"Auris, is f",english:"Ear"},{latin:"Facinus, oris n",english:"Crime"},{latin:"Caedes, is f",english:"Slaughter/killing"},{latin:"Decerno, ere, decrevi, decretum",english:"To determine/decide"},{latin:"Praemium, i n",english:"Reward/bounty"},{latin:"Numquam",english:"Never"},{latin:"Igitur",english:"Therefore"}],
+  20:[{latin:"Consuetudo, consuetudinis f",english:"Custom/habit"},{latin:"Appello, are, avi, atum",english:"To call/address/name"},{latin:"Porta, ae f",english:"Gate"},{latin:"Misceo, ere, miscui, mixtum",english:"To mix"},{latin:"Cerno, ere, crevi, cretum",english:"To discern/separate"},{latin:"Parens, parentis m/f",english:"Parent"},{latin:"Extremus, a, um",english:"Farthest/extreme"},{latin:"Soror, oris f",english:"Sister"},{latin:"Pes, pedis m",english:"Foot"},{latin:"Celer, celeris, celere",english:"Swift"},{latin:"Tot...quot",english:"As many...as"},{latin:"Lingua, ae f",english:"Tongue/language"},{latin:"Sono, are, avi, atum",english:"Sound/resound"},{latin:"Mox",english:"Soon"},{latin:"Tergum, i n",english:"Back/rear"},{latin:"Crimen, criminis n",english:"Verdict/accusation"},{latin:"Rumpo, rumpere, rupi, ruptum",english:"To break/rupture"},{latin:"Aspicio, aspicere, aspexi, aspectum",english:"To look at/behold"},{latin:"Fluctus, us m",english:"Flood/surf/wave"},{latin:"Classis, is f",english:"Fleet"}]
+};
 
-  const progressBar = document.getElementById('progress-bar');
-  const flashcard   = document.getElementById('flashcard');
-  const frontEl     = document.getElementById('card-front');
-  const backEl      = document.getElementById('card-back');
-  const cardInfoEl  = document.getElementById('card-info');
-  const prevBtn     = document.getElementById('prev-btn');
-  const nextBtn     = document.getElementById('next-btn');
+// UI refs
+const menuEl=document.getElementById('menu');
+const dirEl=document.getElementById('direction-container');
+const studyEl=document.getElementById('study-container');
+const startBtn=document.getElementById('start-btn');
+const returnDirBtn=document.getElementById('return-dir-btn');
+const homeBtn=document.getElementById('home-btn');
 
-  // We’ll keep both the evolving pool and the original selection
-  let available = [], history = [], initialPool = [], currentIndex = -1, direction = 'latToEn';
+const progressBar=document.getElementById('progress-bar');
+const flashcard=document.getElementById('flashcard');
+const frontEl=document.getElementById('card-front');
+const backEl=document.getElementById('card-back');
+const cardInfoEl=document.getElementById('card-info');
+const prevBtn=document.getElementById('prev-btn');
+const nextBtn=document.getElementById('next-btn');
 
-  // 1) After selecting chapters
-  startBtn.addEventListener('click', () => {
-    const picked = Array.from(
-      document.querySelectorAll('#chapter-selection input:checked')
-    ).map(cb => +cb.value);
+let available=[], history=[], initialPool=[], currentIndex=-1, direction='latToEn';
 
-    if (!picked.length) {
-      alert('Please select at least one chapter.');
-      return;
-    }
+startBtn.addEventListener('click',()=>{
+  const picked=[...document.querySelectorAll('#chapter-selection input:checked')].map(cb=>+cb.value);
+  if(!picked.length){ toast('Please select at least one chapter.'); return; }
+  available=[]; picked.forEach(ch=> available.push(...(chapters[ch]||[])));
+  initialPool=available.slice();
+  menuEl.style.display='none';
+  dirEl.style.display='block';
+});
 
-    // build the working pool and snapshot the original
-    available = [];
-    picked.forEach(ch => available.push(...(chapters[ch]||[])));
-    initialPool = available.slice();    // <— capture it here
+dirEl.addEventListener('change',e=>{
+  if(e.target.name!=='direction') return;
+  direction=e.target.value;
+  dirEl.style.display='none'; studyEl.style.display='block';
+  drawNext();
+});
 
-    // switch screens
-    menuEl.style.display = 'none';
-    dirEl.style.display  = 'block';
-  });
+function updateProgress(){
+  const total=history.length+available.length;
+  const pct= total ? (history.length/total*100) : 0;
+  progressBar.style.width=pct+'%';
+  cardInfoEl.textContent=`${history.length} of ${total}`;
+}
 
-  // 2) After picking direction
-  dirEl.addEventListener('change', e => {
-    if (e.target.name !== 'direction') return;
-    direction = e.target.value;
-    dirEl.style.display   = 'none';
-    studyEl.style.display = 'block';
-    drawNext();
-  });
-
-  // Update progress bar & text
-  function updateProgress() {
-    const total = history.length + available.length;
-    const pct   = total ? (history.length/total*100) : 0;
-    progressBar.style.width = pct + '%';
-    cardInfoEl.textContent  = `${history.length} of ${total}`;
+function drawNext(){
+  if(!available.length){
+    if(confirm('You\'ve gone through all words. Study again?')){
+      history=[]; available=initialPool.slice(); currentIndex=-1; drawNext();
+    }else{ location.reload(); }
+    return;
   }
+  const idx=Math.floor(Math.random()*available.length);
+  const card=available.splice(idx,1)[0];
+  history.push(card); currentIndex=history.length-1;
+  updateCard(); updateProgress();
+}
 
-  // 3) Draw next card (or restart)
-  function drawNext(){
-    if (!available.length) {
-      if (confirm('You’ve gone through all words. Study again?')) {
-        history = [];
-        available = initialPool.slice();   // <— reset from the original selection
-        currentIndex = -1;
-        drawNext();
-      } else {
-        location.reload();
-      }
-      return;
-    }
+function updateCard(){
+  flashcard.classList.remove('flipped');
+  const {latin,english}=history[currentIndex];
+  frontEl.textContent= direction==='latToEn' ? latin : english;
+  backEl.textContent = direction==='latToEn' ? english : latin;
+}
 
-    const idx = Math.floor(Math.random() * available.length);
-    const card = available.splice(idx, 1)[0];
-    history.push(card);
-    currentIndex = history.length - 1;
-    updateCard();
-    updateProgress();
+flashcard.addEventListener('click',()=> flashcard.classList.toggle('flipped'));
+prevBtn.addEventListener('click',()=>{ if(currentIndex>0){ currentIndex--; updateCard(); updateProgress(); } });
+nextBtn.addEventListener('click',()=>{ if(currentIndex<history.length-1){ currentIndex++; updateCard(); updateProgress(); } else { drawNext(); } });
+returnDirBtn?.addEventListener('click',()=> location.reload());
+homeBtn?.addEventListener('click',()=> location.reload());
+
+document.addEventListener('keydown',e=>{
+  if(studyEl.style.display==='block'){
+    if(e.key==='ArrowLeft') prevBtn.click();
+    if(e.key==='ArrowRight') nextBtn.click();
+    if(e.key===' ') flashcard.click();
+    if(e.key.toLowerCase()==='h') homeBtn?.click();
   }
+});
 
-  // 4) Show current card
-  function updateCard(){
-    flashcard.classList.remove('flipped');
-    const { latin, english } = history[currentIndex];
-    frontEl.textContent = direction === 'latToEn' ? latin : english;
-    backEl.textContent  = direction === 'latToEn' ? english : latin;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show'); setTimeout(()=> t.classList.remove('show'), 1200);
+}
+
+// Dust motes (Hi-DPI)
+(function dust(){
+  const canvas=document.getElementById('dust');
+  const ctx=canvas.getContext('2d');
+  let w,h,motes=[];
+  function size(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    w=innerWidth; h=innerHeight;
+    canvas.width=w*dpr; canvas.height=h*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
   }
-
-  // 5) Handlers
-  flashcard.addEventListener('click', () => flashcard.classList.toggle('flipped'));
-  prevBtn.addEventListener('click', () => {
-    if (currentIndex > 0) {
-      currentIndex--;
-      updateCard();
-      updateProgress();
+  size(); addEventListener('resize',size);
+  const N=90;
+  function reset(p){
+    p.x=Math.random()*w; p.y=Math.random()*h;
+    p.r=Math.random()*2.0+0.7; p.a=Math.random()*Math.PI*2;
+    p.s=(Math.random()*0.3+0.05); p.o=Math.random()*0.35+0.25;
+    p.color=Math.random()>0.5?'#fff7d6':'#fceabb';
+  }
+  for(let i=0;i<N;i++){let p={}; reset(p); motes.push(p);} 
+  function tick(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of motes){
+      p.a += (Math.random()-0.5)*0.05;
+      p.x += Math.cos(p.a)*p.s; p.y += Math.sin(p.a)*p.s*0.6;
+      if(p.x<-10||p.x>w+10||p.y<-10||p.y>h+10) reset(p);
+      ctx.globalAlpha=p.o; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.closePath();
+      ctx.fillStyle=p.color; ctx.shadowBlur=10; ctx.shadowColor=p.color; ctx.fill(); ctx.shadowBlur=0;
     }
-  });
-  nextBtn.addEventListener('click', () => {
-    if (currentIndex < history.length - 1) {
-      currentIndex++;
-      updateCard();
-      updateProgress();
-    } else {
-      drawNext();
-    }
-  });
-  returnDirBtn.addEventListener('click', () => location.reload());
-  homeBtn.addEventListener('click',       () => location.reload());
-
- // ←→, space, H keyboard shortcuts
-  document.addEventListener('keydown', e => {
-    if (studyEl.style.display === 'block') {
-      if (e.key === 'ArrowLeft')  prevBtn.click();
-      if (e.key === 'ArrowRight') nextBtn.click();
-      if (e.key === ' ')           flashcard.click();
-      if (e.key.toLowerCase() === 'h') homeBtn.click();
-    }
-  }); 
-
-  </script>
-
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
 </body>
 </html>
