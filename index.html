@@ -230,8 +230,21 @@ function drawNext(){
   updateCard(); updateProgress();
 }
 
-function updateCard(){
+// ---- FIX: eliminate backside flash on navigation ----
+function instantResetToFront(){
+  // Temporarily disable the flip transition so the card snaps to the front
+  const prevTransition = flashcard.style.transition;
+  flashcard.style.transition = 'none';
   flashcard.classList.remove('flipped');
+  // Force reflow to apply the no-transition state
+  void flashcard.offsetWidth;
+  // Restore transition so manual flips still animate
+  flashcard.style.transition = prevTransition || '';
+}
+
+function updateCard(){
+  // Ensure the card is instantly showing the front BEFORE changing content
+  instantResetToFront();
   const {latin,english}=history[currentIndex];
   frontEl.textContent= direction==='latToEn' ? latin : english;
   backEl.textContent = direction==='latToEn' ? english : latin;
